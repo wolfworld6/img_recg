@@ -4,10 +4,10 @@ from itertools import combinations
 import glob
 import numpy as np
 
-# normal_img_dir = 'E:\\bigdata\\pycharmProject\\image_recognition\\data\\2018_07_01\\normal'
-# abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\image_recognition\\data\\2018_07_01\\abnormal'
-normal_img_dir = 'E:\\bigdata\\pycharmProject\\image_recognition\\data\\shipai\\normal'
-abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\image_recognition\\data\\shipai\\abnormal'
+# normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\normal'
+# abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\abnormal'
+normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\normal'
+abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\abnormal'
 norm_img_hash = []
 abn_img_hash = {}
 
