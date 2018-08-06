@@ -3,6 +3,7 @@ from pHash import *
 from itertools import combinations
 import glob
 import numpy as np
+from sklearn.cluster import KMeans
 
 # normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\normal'
 # abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\abnormal'
@@ -10,6 +11,23 @@ normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\normal'
 abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\abnormal'
 norm_img_hash = []
 abn_img_hash = {}
+
+def img2hash(img_dir):
+    """图片转hash"""
+    os.chdir(img_dir)
+    images = []
+    images.extend(glob.glob('*.JPG'))
+    img_hash = {}
+    for i in images:
+        img_hash[i] = avhash(i)
+
+    return img_hash
+
+def normal_img_hash():
+    """正常图片转hash"""
+    nimg_hash = img2hash(normal_img_dir)
+    print(nimg_hash)
+    return nimg_hash
 
 def normal_img_avg_dist():
     """N 张正常图片的平均 Hamming distance"""
@@ -54,8 +72,10 @@ def kmeans_cluster():
 
 
 
+
 if __name__ == '__main__':
-    normal_img_avg_dist()
-    abnormal_hamming_distance()
+    normal_img_hash()
+    # normal_img_avg_dist()
+    # abnormal_hamming_distance()
 
 
