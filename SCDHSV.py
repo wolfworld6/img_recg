@@ -140,7 +140,7 @@ def train_threshold(imgs_cf, model):
 
 if __name__ == "__main__":
 
-    file_dir_norm = "E:\eshore\PycharmProjects\Monitor_cam2\data1\lijiaoqiao\\normal"
+    file_dir_norm = "E:\GitRepository\img_recg\data\shipai\\normal"
     files_norm = []
     # get files at the current directory path
     for root, dirs, files_name in os.walk(file_dir_norm):
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     # 根据标准差，得出比较活跃的块，并将这些块去掉
 
     # 计算测试图片的块特征，并于正常图片比对，然后进行异常判别
-    file_dir_test = "E:\eshore\PycharmProjects\Monitor_cam2\data1\lijiaoqiao\\test"
+    file_dir_test = "E:\GitRepository\img_recg\data\shipai\\test"
     # compute features of test images
     num_corr = 0
     for root, dirs, files_name in os.walk(file_dir_test):
