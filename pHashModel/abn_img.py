@@ -7,8 +7,8 @@ import numpy as np
 
 # normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\normal'
 # abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\abnormal'
-normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\normal'
-abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\abnormal'
+normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\original\\normal'
+abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\original\\abnormal'
 img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\clusterd'
 norm_cluster_imghash = {}   # {'cluster_name',[img_hash]}
 norm_cluster_avg_dist = {}  # {'cluster_name', avg_distance}
