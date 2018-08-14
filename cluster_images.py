@@ -8,7 +8,6 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
-
 '''
 
 
@@ -65,7 +64,6 @@ def color_mean(img):
 
 def cut(file,vx,vy):
     """
-
     :param file:
     :param vx: 块大小
     :param vy: 块大小
@@ -148,6 +146,6 @@ if __name__ == "__main__":
     feature = []
     for f in files_norm:
         img = cv2.imread(f)
-        ft = color_moments(img)
+        ft = color_mean(img)
         feature.append(ft)
     l1, l2, l3 = image_cluster(feature, 2)
