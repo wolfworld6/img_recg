@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
+   对图像进行聚类
 '''
 
 
