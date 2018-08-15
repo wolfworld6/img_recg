@@ -126,19 +126,19 @@ def abnorm_discriminant(filename, test, model, threshold):
     # error < 45 说明为正常图片
     if error < threshold:
         if filename == 'normal':
-            # print("判断为正常: 判断正确")
+            print("判断为正常: 判断正确")
             flag = 1
             return flag
         else:
-            # print("判断为正常: 判断错误")
+            print("判断为正常: 判断错误")
             return flag
     else:
         if filename == 'abnormal':
-            # print("判断为异常: 判断正确")
+            print("判断为异常: 判断正确")
             flag = 1
             return flag
         else:
-            # print("判断为异常: 判断错误")
+            print("判断为异常: 判断错误")
             return flag
 
 
@@ -186,7 +186,7 @@ def image_cluster(data, k):
     return index1, index2, index3
 
 
-def features(label, vx, vy, n_blk):
+def features(index, vx, vy, n_blk):
     """
 
     :param label: 聚类类别对应的图片索引
@@ -201,9 +201,9 @@ def features(label, vx, vy, n_blk):
     # 将图像分块
     for i in range(n_blk):
         blocks_featrue.append([])
-    for l in label:
+    for i in index:
         img_f = []
-        res = cut(files_norm[l], vx, vy)
+        res = cut(files_norm[i], vx, vy)
         for b in range(len(res)):
             blk_f = color_moments(res[b])
             blocks_featrue[b].append(blk_f)
@@ -233,7 +233,7 @@ def features(label, vx, vy, n_blk):
 
 if __name__ == "__main__":
 
-    file_dir_norm = "E:\GitRepository\img_recg\data\shipai\\normal"
+    file_dir_norm = "E:\GitRepository\img_recg\data\shipai\\train"
     files_norm = []
     # get files at the current directory path
     for root, dirs, files_name in os.walk(file_dir_norm):
@@ -263,12 +263,13 @@ if __name__ == "__main__":
     # 根据标准差，得出比较活跃的块，并将这些块去掉
 
     # 计算测试图片的块特征，并于正常图片比对，然后进行异常判别
-    file_dir_test = "E:\GitRepository\img_recg\data\shipai\\abnormal"
+    file_dir_test = "E:\GitRepository\img_recg\data\shipai\\test"
 
     # test image abnormal detection
     count = 0
     for root, dirs, files_name in os.walk(file_dir_test):
         for f in files_name:
+            print(f, ": ")
             file_test = root + "\\" + f
             res = cut(file_test, vx, vy)
             img_feat = []

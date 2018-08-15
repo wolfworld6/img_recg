@@ -9,9 +9,9 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
+   图像分块、阈值测试
 
 '''
-
 
 # Compute low order moments(1,2,3)
 def color_moments(img):
@@ -75,7 +75,6 @@ def cut(file, vx, vy):
                         分为：4 x 3个块 正确率为：0.95左右(比12x9稍高)
     """
     im = Image.open(file)
-
     # 偏移量,滑动量
     dx = vx
     dy = vy
@@ -92,7 +91,7 @@ def cut(file, vx, vy):
     while x2 <= 3024:
         # 横向切
         while y2 <= 4032:
-            name3 = file + str(n) + ".jpg"
+            # name3 = file + str(n) + ".jpg"
             # print n,x1,y1,x2,y2
             im2 = im.crop((y1, x1, y2, x2))
             im2_mat = np.asanyarray(im2)
@@ -187,24 +186,24 @@ def image_cluster(data, k):
     return index1, index2, index3
 
 
-def features(label, vx, vy, n_blk):
+def features(index, vx, vy, n_blk):
     """
 
-    :param label: 聚类类别对应的图片索引
+    :param index: 聚类类别对应的图片索引
     :param vx: 图像块的宽
     :param vy: 图像块的长
     :param n_blk: 图像切成 n_blk 块
     :return: 按块特征的平均值，每张图像的特征
     """
-    # compute features of images
     blocks_featrue = []
     imgs_feature = []
+    # compute features of images
     # 将图像分块
     for i in range(n_blk):
         blocks_featrue.append([])
-    for l in label:
+    for i in index:
         img_f = []
-        res = cut(files_norm[l], vx, vy)
+        res = cut(files_norm[i], vx, vy)
         for b in range(len(res)):
             blk_f = color_moments(res[b])
             blocks_featrue[b].append(blk_f)
@@ -225,20 +224,22 @@ def features(label, vx, vy, n_blk):
         model.append(mean)
         # 每一特征维度标准差
         std = np.std(arr, 0)
-        std_2 = np.linalg.norm(std)
         # print("第 %d 个块： " % i)
         # print("平均值： ", mean)
         # print("标准差: ", std_2)
+
     return model, imgs_feature
 
 
 if __name__ == "__main__":
 
     file_dir_norm = "E:\GitRepository\img_recg\data\shipai\\train"
+    file_dir_test = "E:\GitRepository\img_recg\data\shipai\\test"
+    n_file_test = len([name for name in os.listdir(file_dir_test) if os.path.isfile(os.path.join(file_dir_test, name))])
     files_norm = []
     # get files at the current directory path
-    for root, dirs, files_name in os.walk(file_dir_norm):
-        for file in files_name:
+    for root, dirs, name_norm in os.walk(file_dir_norm):
+        for file in name_norm:
             files_norm.append(root + '\\' + file)
 
     # 提取整张图片特征，用于聚类
@@ -249,30 +250,39 @@ if __name__ == "__main__":
         feature.append(ft)
     idx1, idx2, idx3 = image_cluster(feature, 3)
 
-    # 计算各个聚类的model特征，图像特征
-    vx = 1008  # 块宽
-    vy = 1008  # 块长
-    n_blk = 4 * 3  # 切分成 n_blk 个块
+    # 图像切分成不同数量的块
+    # 图像大小：3024x4032
+    block_size_num = []
+    for x in range(1, 3025):
+        if 3024 % x == 0:
+            for y in range(1, 4033):
+                if 4032 % y == 0:
+                    if x > 100 and y > 100 and ((3024 / x) * (4032 / y)) < 2000:
+                        block_size_num.append((x, y, int((3024 / x) * (4032 / y))))
 
-    model1, imgs_feature1 = features(idx1, vx, vy, n_blk)
-    model2, imgs_feature2 = features(idx2, vx, vy, n_blk)
-    model3, imgs_feature3 = features(idx3, vx, vy, n_blk)
-    # 通过正常图片特征与model的欧氏距离得到差值中位数
-    mid1 = get_mid(imgs_feature1, model1)
-    mid2 = get_mid(imgs_feature2, model2)
-    mid3 = get_mid(imgs_feature3, model3)
-    # 根据标准差，得出比较活跃的块，并将这些块去掉
+    # 使用不同大小的块进行测试，求出最好的图像块切分方式
+    result = []
+    times = np.arange(1.1, 3.1, 0.1)  # 设定不同阈值
 
-    # 计算测试图片的块特征，并于正常图片比对，然后进行异常判别
-    file_dir_test = "E:\GitRepository\img_recg\data\shipai\\test"
+    for vx, vy, n_blk in block_size_num:  # 不同块数
 
-    # 对不同的阈值进行测试，求出最好的阈值
-    best_times = 0
-    max_correct = 0
-    times_correct = []
-    for times in np.arange(1.1, 2.0, 0.1):
+        count = []  # 统计判断正确的图片数量
+        for t in range(len(times)):
+            count.append([])
+
+        model1, imgs_feature1 = features(idx1, vx, vy, n_blk)
+        model2, imgs_feature2 = features(idx2, vx, vy, n_blk)
+        model3, imgs_feature3 = features(idx3, vx, vy, n_blk)
+        # 通过正常图片特征与model的欧氏距离得到差值中位数
+        mid1 = get_mid(imgs_feature1, model1)
+        mid2 = get_mid(imgs_feature2, model2)
+        mid3 = get_mid(imgs_feature3, model3)
+        # 根据标准差，得出比较活跃的块，并将这些块去掉
+
+        # 计算测试图片的块特征，并于正常图片比对，然后进行异常判别
+
         # test image abnormal detection
-        count = 0
+
         for root, dirs, files_name in os.walk(file_dir_test):
             for f in files_name:
                 file_test = root + "\\" + f
@@ -282,18 +292,13 @@ if __name__ == "__main__":
                     blk_feat = color_moments(res[b])
                     arr = np.array(blk_feat)
                     img_feat.append(arr)
-                flag1 = abnorm_discriminant(f.split('_')[0], img_feat, model1, times * mid1)
-                flag2 = abnorm_discriminant(f.split('_')[0], img_feat, model2, times * mid2)
-                flag3 = abnorm_discriminant(f.split('_')[0], img_feat, model3, times * mid3)
-                if flag1 or flag2 or flag3:
-                    count = count + 1
 
-            print("阈值：%f, 正确率：%f" % (times, count / len(files_name)))
+                for t in range(len(times)):  # 不同阈值
+                    flag1 = abnorm_discriminant(f.split('_')[0], img_feat, model1, times[t] * mid1)
+                    flag2 = abnorm_discriminant(f.split('_')[0], img_feat, model2, times[t] * mid2)
+                    flag3 = abnorm_discriminant(f.split('_')[0], img_feat, model3, times[t] * mid3)
+                    if flag1 or flag2 or flag3:
+                        count[t].append(1)
 
-        if count > max_correct:
-            max_correct = count
-            best_times = times
-        times_correct.append((times, count))
-
-
-
+            for t in range(len(times)):
+                print("vx：%d,vy: %d, n_blk: %d, times:%f, 正确率：%f" % (vx, vy, n_blk, times[t], count[t].count(1) / n_file_test))
