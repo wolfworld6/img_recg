@@ -12,6 +12,18 @@ from sklearn.model_selection import train_test_split
 img_labels = []
 
 
+def init_img():
+    """
+    将图片转换成指纹，并打上标签，保存到  knn_data_set.csv 中
+    :return:
+    """
+    # df_clu_img(clusterd_img_dir)
+    img_label(normal_img_dir, 'nor')
+    img_label(abnormal_img_dir, 'abn')
+    os.chdir(sys.path[0])
+    pd.DataFrame(img_labels, columns=["img", "fingerprint", "label"]).to_csv(knn_data_set)
+
+
 def df_clu_img(clusterd_img_dir):
     """
     把clusterd中的图片文件转换成指纹
@@ -29,30 +41,20 @@ def df_clu_img(clusterd_img_dir):
     return img_labels
 
 
-def df_abn_img(abnormal_img_dir):
+def img_label(abnormal_img_dir, label):
     """
-    异常图片转换成指纹
+    通用的图片转换成指纹
     :param abnormal_img_dir:
     :return:
     """
+    os.chdir(sys.path[0])
     os.chdir(abnormal_img_dir)
     images = []
     images.extend(glob.glob('*.JPG'))
     for i in images:
-        img_labels.append([i, avhash(i), 'abn'])
+        img_labels.append([i, avhash(i), label])
 
     return img_labels
-
-
-def init_img():
-    """
-    将图片转换成指纹，并打上标签，保存到  knn_data_set.csv 中
-    :return:
-    """
-    df_clu_img(clusterd_img_dir)
-    df_abn_img(abnormal_img_dir)
-    os.chdir(sys.path[0])
-    pd.DataFrame(img_labels, columns=["img", "fingerprint", "label"]).to_csv(knn_data_set)
 
 
 def split_train_test(df):
@@ -99,12 +101,12 @@ def main():
     # init_img()
     df = pd.read_csv(knn_data_set)
     train, test = split_train_test(df)
-    predict_result = knn(10, train, test)
+    predict_result = knn(8, train, test)
     a, p, r, f1 = summary(predict_result)
-    row = pd.DataFrame([['accuracy', '', a], ['precision', '', p], ['recall', '', r], ['F1-measure', '', f1]], columns=['img', 'img,original_label', 'predict_label'])
+    row = pd.DataFrame([['accuracy', '', a], ['precision', '', p], ['recall', '', r], ['F1-measure', '', f1]], columns=['img', 'original_label', 'predict_label'])
     predict_result = predict_result.append(row, ignore_index=True)
     os.chdir(sys.path[0])
-    predict_result.to_csv('../data/shipai/knn_result.csv')
+    predict_result.to_csv(knn_result)
     print(predict_result)
     print('accuracy: ', a, 'precision: ', p, '\t', 'recall', r, '\t', 'F1-measure:', f1)
 
