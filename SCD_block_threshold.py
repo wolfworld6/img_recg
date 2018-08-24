@@ -9,6 +9,7 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
+   图像分块、阈值测试
 
 '''
 
@@ -301,9 +302,3 @@ if __name__ == "__main__":
 
             for t in range(len(times)):
                 print("vx：%d,vy: %d, n_blk: %d, times:%f, 正确率：%f" % (vx, vy, n_blk, times[t], count[t].count(1) / n_file_test))
-
-    ''' 
-    for vx, vy, n_blk in block_size_num:
-        for t in range(len(times)):
-            print("vx：%d,vy: %d, n_blk: %d, times:%f, 正确率：%f" % (vx, vy, n_blk, times[t], count[t].count(1) / n_file_test))
-    '''

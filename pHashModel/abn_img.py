@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# @Time    : 2018/8/10 16:11
+# @Author  : Lijianfeng
+# @Project : img_recg
+
 from pHashModel.pHash import *
 from itertools import combinations
 import glob
 import numpy as np
+from pHashModel.phash_config import *
 
-# normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\normal'
-# abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\2018_07_01\\abnormal'
-normal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\original\\normal'
-abnormal_img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\original\\abnormal'
-img_dir = 'E:\\bigdata\\pycharmProject\\img_recg\\data\\shipai\\clusterd'
 norm_cluster_imghash = {}   # {'cluster_name',[img_hash]}
 norm_cluster_avg_dist = {}  # {'cluster_name', avg_distance}
 abn_img_hash = {}
@@ -38,9 +38,9 @@ def avg_dist(arr_hash):
     avg_dist = np.mean(hds)
     return avg_dist
 
-def normal_img_avg_dist(img_dir):
+def normal_img_avg_dist(clusterd_img_dir):
     """N 张正常图片的平均 Hamming distance"""
-    for root, dirs, files in os.walk(img_dir):
+    for root, dirs, files in os.walk(clusterd_img_dir):
         cluster_name = root.split("\\")[-1]
         avh = []
         for name in files:
@@ -76,7 +76,7 @@ def abnormal_hamming_distance():
 
 
 if __name__ == '__main__':
-    normal_img_avg_dist(img_dir)
+    normal_img_avg_dist(clusterd_img_dir)
     abnormal_hamming_distance()
 
 
