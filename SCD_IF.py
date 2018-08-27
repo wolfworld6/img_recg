@@ -21,7 +21,7 @@ import pickle
 '''
 
 
-class PerformanceEvaluation():
+class PerformanceEvaluation:
     """
     算法性能评估
     :param TP: True Positive(真正)：将正类预测为正类数
@@ -32,13 +32,13 @@ class PerformanceEvaluation():
     :param N: 预测为负类样本数
     :return:
     """
-    def __init__(self):
-        self.__TP = 0
-        self.__TN = 0
-        self.__FP = 0
-        self.__FN = 0
-        self.__P = 0
-        self.__N = 0
+    def __init__(self, tp, tn, fp, fn, p, n):
+        self.__TP = tp
+        self.__TN = tn
+        self.__FP = fp
+        self.__FN = fn
+        self.__P = p
+        self.__N = n
 
     def get(self):
         return self.__TP, \
@@ -292,8 +292,8 @@ if __name__ == '__main__':
 
         if pred[i] == y_test[i]:
             count = count + 1
-    per_eva = PerformanceEvaluation()
-    per_eva.set(TP, TN, FP, FN, P, N)
+    per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
+    # per_eva.set(TP, TN, FP, FN, P, N)
 
     print("测试集正确率为：%f " % (per_eva.get_accuracy()),
           "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
