@@ -109,9 +109,9 @@ def load(pklf):
         else:
             X_abnorm.append(X[i])
             y_abnorm.append(y[i])
-    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.01, random_state=42)
+    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.2, random_state=0)
 
-    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.9, random_state=42)
+    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.2, random_state=0)
     
     X_train = np.vstack((X_norm_train, X_abnorm_train))
     y_train = np.r_[y_norm_train, y_abnorm_train]
@@ -240,7 +240,7 @@ def create_data(file_dir, test_size):
 
 if __name__ == '__main__':
 
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(0)  # 42
     file_dir = "E:\Data\\train"
     pklf = "./feature.pkl"
     X_train, X_test, y_train, y_test, outliers_fraction, unused = load(pklf)
@@ -249,34 +249,41 @@ if __name__ == '__main__':
     clf = IsolationForest(random_state=rng)
     clf.fit(X_train)
     scores_pred = clf.decision_function(X_train)
-    valid = clf.predict(X_train)
-    # 计算预测正确率
-    TP = 0  # 样本为正，预测结果为正
-    TN = 0  # 样本为负，预测结果为正
-    FP = 0  # 样本为负，预测结果为负,误报
-    FN = 0  # 样本为正，预测结果为负,漏报
-    P = 0  # 正类样本数
-    N = 0  # 负类样本数
 
-    for i in range(len(valid)):
-        if valid[i] == 1:  # 预测为正类
-            if valid[i] == y_train[i]:  # 实际为正类
-                P = P + 1
-                TP = TP + 1
-            else:  # 实际为负类
-                FP = FP + 1
-                N = N + 1
-        else:  # 预测为负类
-            if valid[i] == y_train[i]:  # 实际为负类
-                TN = TN + 1
-                N = N + 1
-            else:  # 实际为正类
-                P = P + 1
-                FN = FN + 1
+    X_predict = X_train
+    y_predict = y_train
+    times = np.arange(-1.5, -0.5, 0.1)
+    # times = [-2.8]
+    for t in times:
+        valid = clf.predict(X_predict, t)
+        # 计算预测正确率
+        TP = 0  # 样本为正，预测结果为正
+        TN = 0  # 样本为负，预测结果为正
+        FP = 0  # 样本为负，预测结果为负,误报
+        FN = 0  # 样本为正，预测结果为负,漏报
+        P = 0  # 正类样本数
+        N = 0  # 负类样本数
 
-    per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
+        for i in range(len(valid)):
+            if valid[i] == 1:  # 预测为正类
+                if valid[i] == y_predict[i]:  # 实际为正类
+                    P = P + 1
+                    TP = TP + 1
+                else:  # 实际为负类
+                    FP = FP + 1
+                    N = N + 1
+            else:  # 预测为负类
+                if valid[i] == y_predict[i]:  # 实际为负类
+                    TN = TN + 1
+                    N = N + 1
+                else:  # 实际为正类
+                    P = P + 1
+                    FN = FN + 1
 
-    print("正确率为：%f " % (per_eva.get_accuracy()),
-          "召回率、正常图像识别率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
-          " 特效度、异常图像识别率：%d/%d = %f" % (TN, N, per_eva.get_specificity())
-          )
+        per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
+
+        print("t: %f" % t,
+              "正确率为：%f " % (per_eva.get_accuracy()),
+              "召回率、正常图像识别率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
+              " 特效度、异常图像识别率：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+              )
