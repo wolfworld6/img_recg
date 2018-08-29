@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 """
-lof
+lof_tuning
 
 This module implements the Local Outlier Factor algorithm.
 
