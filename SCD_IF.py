@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
 
-    print("测试集正确率为：%f " % (per_eva.get_accuracy()),
-          "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
-          " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+    print("正确率为：%f " % (per_eva.get_accuracy()),
+          "召回率、正常图像识别率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
+          " 特效度、异常图像识别率：%d/%d = %f" % (TN, N, per_eva.get_specificity())
           )
