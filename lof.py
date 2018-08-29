@@ -3,7 +3,7 @@
 """
 lof
 
-This module implements the Local Outlier Factor algorithm.
+This module implements the Local Outlier Factor algorithm(LOF).
 
 :copyright: (c) 2013 by Damjan Kužnar.
 :license: GNU GPL v2, see LICENSE for more details.
