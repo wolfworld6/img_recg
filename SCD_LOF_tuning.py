@@ -11,6 +11,7 @@ import pickle
 import lof_tuning
 
 '''
+    K与threshold调优
    @author:bqFirst
    date:2018-8p
 
