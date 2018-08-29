@@ -245,55 +245,36 @@ if __name__ == '__main__':
     pklf = "./feature.pkl"
     X_train, X_test, y_train, y_test, outliers_fraction, unused = load(pklf)
 
-    # 构造训练样本
-    n_samples = len(X_train)  # 样本总数
-    n_inliers = int((1. - outliers_fraction) * n_samples)
-    n_outliers = int(outliers_fraction * n_samples)
-
     # fit the model
     clf = IsolationForest(random_state=rng)
     clf.fit(X_train)
-    # y_pred_train = clf.predict(X_train)
     scores_pred = clf.decision_function(X_train)
     valid = clf.predict(X_train)
-
-    # 训练模型正确率
-    count = 0
-    for i in range(len(valid)):
-        if valid[i] == y_train[i]:
-            count = count+1
-    # 预测集正确率
-    '''
-    file_dir_test = 'E:\Data\\test'
-    X_test, y_test = create_data(file_dir_test, 0.2)
-    '''
-    pred = clf.predict(X_test)
     # 计算预测正确率
     TP = 0  # 样本为正，预测结果为正
     TN = 0  # 样本为负，预测结果为正
     FP = 0  # 样本为负，预测结果为负,误报
     FN = 0  # 样本为正，预测结果为负,漏报
-    P = 0  # 预测为正类样本数
-    N = 0  # 预测为负类样本数
+    P = 0  # 正类样本数
+    N = 0  # 负类样本数
 
-    for i in range(len(pred)):
-        if pred[i] == 1:  # 预测为正类
-            P = P + 1
-            if pred[i] == y_test[i]:  # 实际为正类
+    for i in range(len(valid)):
+        if valid[i] == 1:  # 预测为正类
+            if valid[i] == y_train[i]:  # 实际为正类
+                P = P + 1
                 TP = TP + 1
             else:  # 实际为负类
                 FP = FP + 1
+                N = N + 1
         else:  # 预测为负类
-            N = N + 1
-            if pred[i] == y_test[i]:  # 实际为负类
+            if valid[i] == y_train[i]:  # 实际为负类
                 TN = TN + 1
+                N = N + 1
             else:  # 实际为正类
+                P = P + 1
                 FN = FN + 1
 
-        if pred[i] == y_test[i]:
-            count = count + 1
     per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
-    # per_eva.set(TP, TN, FP, FN, P, N)
 
     print("测试集正确率为：%f " % (per_eva.get_accuracy()),
           "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),

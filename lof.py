@@ -166,7 +166,7 @@ def local_outlier_factor(min_pts, instance, instances, **kwargs):
 
 
 # 从数据集中返回异常数据
-def outliers(threshold, k, instances, **kwargs):
+def outliers(k, instances, **kwargs):
     """Simple procedure to identify outliers in the dataset."""
     instances_value_backup = instances
     outliers = []
@@ -175,7 +175,7 @@ def outliers(threshold, k, instances, **kwargs):
         instances.remove(instance)
         l = LOF(instances, **kwargs)
         value = l.local_outlier_factor(k, instance)
-        if value > threshold:
+        if value > 1:
             outliers.append({"lof": value, "instance": instance, "index": i})
     outliers.sort(key=lambda o: o["lof"], reverse=True)
     return outliers
