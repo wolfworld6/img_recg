@@ -17,7 +17,7 @@ import pickle
 import lof
 '''
    @author:bqFirst
-   date:2018-8p
+   date:2018-8
 
 '''
 
