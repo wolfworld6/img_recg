@@ -1,9 +1,8 @@
-#!/usr/bin/python
 # -*- coding: utf8 -*-
 """
-lof_tuning
+lof
 
-This module implements the Local Outlier Factor algorithm.
+This module implements the Local Outlier Factor algorithm(LOF).
 
 :copyright: (c) 2013 by Damjan Kužnar.
 :license: GNU GPL v2, see LICENSE for more details.
@@ -138,28 +137,14 @@ def local_reachability_density(min_pts, instance, instances, **kwargs):
     Returns: local reachability density
     Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float"""
     (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
-    reachability_distances = [0]*len(neighbours)  # n.zeros(len(neighbours))
+    reachability_distances_array = [0]*len(neighbours)  # n.zeros(len(neighbours))
     for i, neighbour in enumerate(neighbours):
-        reachability_distances[i] = reachability_distance(min_pts, instance, neighbour, instances, **kwargs)
-    if not any(reachability_distances):
+        reachability_distances_array[i] = reachability_distance(min_pts, instance, neighbour, instances, **kwargs)
+    if not any(reachability_distances_array):
         warnings.warn("Instance %s (could be normalized) is identical to all the neighbors. Setting local reachability density to inf." % repr(instance))
         return float("inf")
     else:
-        # return len(neighbours) / sum(reachability_distances_array)
-        reachability_density = {}
-        if 5 <= min_pts:
-            reachability_density.update({"5": 5/sum(reachability_distances[:5])})
-        elif 10 <= min_pts:
-            reachability_density.update({"10": 10/sum(reachability_distances[:10])})
-        elif 15 <= min_pts:
-            reachability_density.update({"15": 15/sum(reachability_distances[:15])})
-        elif 20 <= min_pts:
-            reachability_density.update({"20": 20/sum(reachability_distances[:20])})
-        elif 25 <= min_pts:
-            reachability_density.update({"25": 25/sum(reachability_distances[:25])})
-        else:
-            reachability_density.update({"30": 25/sum(reachability_distances[:30])})
-        return reachability_density
+        return len(neighbours) / sum(reachability_distances_array)
 
 
 # 越大越有可能为异常(比如返回值 >1 即判为异常)
@@ -169,39 +154,27 @@ def local_outlier_factor(min_pts, instance, instances, **kwargs):
     Returns: local outlier factor
     Signature: (int, (attr1, attr2, ...), ((attr_1_1, ...),(attr_2_1, ...), ...)) -> float"""
     (k_distance_value, neighbours) = k_distance(min_pts, instance, instances, **kwargs)
-    instance_lrd_dict = local_reachability_density(min_pts, instance, instances, **kwargs)
-    lof = {}
-    for k in instance_lrd_dict:
-        lrd_ratios_array = [0.0]*len(neighbours)
-        for i, neighbour in enumerate(neighbours):
-            instances_without_instance = set(instances)
-            instances_without_instance.discard(neighbour)
-            neighbour_lrd_dict = local_reachability_density(min_pts, neighbour, instances_without_instance, **kwargs)
-            lrd_ratios_array[i] = neighbour_lrd_dict[k] / instance_lrd_dict[k]
-            # lrd_ratios = neighbour_lrd / instance_lrd
-        lof.update({k: sum(lrd_ratios_array) / len(neighbours)})
-
-    return lof
+    instance_lrd = local_reachability_density(min_pts, instance, instances, **kwargs)
+    lrd_ratios_array = [0] * len(neighbours)
+    for i, neighbour in enumerate(neighbours):
+        instances_without_instance = set(instances)
+        instances_without_instance.discard(neighbour)
+        neighbour_lrd = local_reachability_density(min_pts, neighbour, instances_without_instance, **kwargs)
+        lrd_ratios_array[i] = neighbour_lrd / instance_lrd
+    return sum(lrd_ratios_array) / len(neighbours)
 
 
 # 从数据集中返回异常数据
-def lof_values(thresholds, k, instances, **kwargs):
+def outliers(k, instances, **kwargs):
     """Simple procedure to identify outliers in the dataset."""
     instances_value_backup = instances
-    values = []
+    outliers = []
     for i, instance in enumerate(instances_value_backup):
         instances = list(instances_value_backup)
         instances.remove(instance)
         l = LOF(instances, **kwargs)
-        lof_dict = l.local_outlier_factor(k, instance)
-        for key in lof_dict:
-            for t in thresholds:
-                if lof_dict[key] > t:
-                    values.append({"k": key, "threshold": t, "lof": lof_dict[key], "instance": instance, "index": i, "label": -1})
-                else:
-                    values.append({"k": key, "threshold": t, "lof": lof_dict[key], "instance": instance, "index": i, "label": 1})
-
-    # outliers.sort(key=lambda o: o["lof"], reverse=True)
-    # for i in range(len(outliers)):
-        # print(outliers[i]["label"])
-    return values
+        value = l.local_outlier_factor(k, instance)
+        if value > 1:
+            outliers.append({"lof": value, "instance": instance, "index": i})
+    outliers.sort(key=lambda o: o["lof"], reverse=True)
+    return outliers

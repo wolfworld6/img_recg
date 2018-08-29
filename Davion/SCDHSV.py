@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
-
+    通过图片特征与mode标准差比对来对图像进行异常检测
 '''
 
 

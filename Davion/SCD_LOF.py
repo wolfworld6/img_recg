@@ -8,12 +8,12 @@ from skimage import feature as ft
 from sklearn.model_selection import train_test_split
 import pickle
 
-import lof_tuning
+from Davion import lof
 
 '''
-    K与threshold调优
    @author:bqFirst
-   date:2018-8p
+   date:2018-8
+   孤立森林异常检测在图像中的应用
 
 '''
 
@@ -80,33 +80,6 @@ class PerformanceEvaluation:
         return p
 
 
-def predict_labels(k, labels_predict, d):
-    times = (6 - divmod(k, 6))[0]
-    if d["t"] == 1.0:
-        labels_predict[0+times*size].extend(d["label"])
-    elif d["t"] == 1.2:
-        labels_predict[1+times*size].extend(d["label"])
-    elif d["t"] == 1.4:
-        labels_predict[2+times*size].extend(d["label"])
-    elif d["t"] == 1.6:
-        labels_predict[3+times*size].extend(d["label"])
-    elif d["t"] == 1.8:
-        labels_predict[4+times*size].extend(d["label"])
-    elif d["t"] == 2.0:
-        labels_predict[5+times*size].extend(d["label"])
-    elif d["t"] == 2.2:
-        labels_predict[6+times*size].extend(d["label"])
-    elif d["t"] == 2.4:
-        labels_predict[7+times*size].extend(d["label"])
-    elif d["t"] == 2.6:
-        labels_predict[8+times*size].extend(d["label"])
-    elif d["t"] == 2.8:
-        labels_predict[9+times*size].extend(d["label"])
-    elif d["t"] == 3.0:
-        labels_predict[10+times*size].extend(d["label"])
-    return labels_predict
-
-
 def load(pklf):
     """
     通过载入数据文件返回训练数据和测试数据
@@ -148,7 +121,7 @@ def load(pklf):
     abnorm_train = len(y_abnorm_train) / len(y_train)
 
     print("X_train:%d,X_test:%d, y_train:%d, y_test:%d, abnorm_train:%f, abnorm_test:%f" % (
-        len(X_train), len(X_test), len(y_train), len(y_test), abnorm_train, abnorm_test))
+    len(X_train), len(X_test), len(y_train), len(y_test), abnorm_train, abnorm_test))
     X_train_tuple = []
     for x in X_train:
         X_train_tuple.append(tuple(x))
@@ -273,6 +246,26 @@ def create_data(file_dir, test_size):
     return X, y
 
 
+def lof_values(thresholds, k, instances, **kwargs):
+    """Simple procedure to identify outliers in the dataset."""
+    instances_value_backup = instances
+    values = []
+    for i, instance in enumerate(instances_value_backup):
+        instances = list(instances_value_backup)
+        instances.remove(instance)
+        l = lof.LOF(instances, **kwargs)
+        value = l.local_outlier_factor(k, instance)
+        if value > thresholds:
+            values.append({"lof": value, "instance": instance, "index": i, "label": -1})
+        else:
+            values.append({"lof": value, "instance": instance, "index": i, "label": 1})
+
+    # outliers.sort(key=lambda o: o["lof"], reverse=True)
+    # for i in range(len(outliers)):
+        # print(outliers[i]["label"])
+    return values
+
+
 if __name__ == '__main__':
 
     rng = np.random.RandomState(42)
@@ -280,59 +273,38 @@ if __name__ == '__main__':
     pklf = "./feature.pkl"
     X_train, X_test, y_train, y_test, outliers_fraction, unused = load(pklf)
 
-    t = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
-    k = 5  # [5, 10, 15, 20 ,25, 30]
+    ts = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+    ks = [5, 10, 15, 20, 25, 30]
+    for k in ks:
+        for t in ts:
+            # 计算预测正确率
+            TP = 0  # 将正类预测为正类数
+            TN = 0  # 将负类预测为负类数
+            FP = 0  # 将负类预测为正类数,误报
+            FN = 0  # 将正类预测为负类数,漏报
+            P = 0  # 正样本数
+            N = 0  # 负样本数
+            valid = lof_values(t, k, X_train)
+            for i in range(len(valid)):
+                if valid[i]["label"] == 1:  # 预测为正类
+                    if valid[i]["label"] == y_train[i]:  # 实际为正类
+                        P = P + 1
+                        TP = TP + 1
+                    else:  # 实际为负类
+                        FP = FP + 1
+                        N = N + 1
+                else:  # 预测为负类
+                    if valid[i]["label"] == y_train[i]:  # 实际为负类
+                        TN = TN + 1
+                        N = N + 1
+                    else:  # 实际为正类
+                        P = P + 1
+                        FN = FN + 1
 
-    valid = lof_tuning.lof_values(t, k, X_train)
-    labels_predict = []
-    for i in range(divmod(k, 5)[0]*len(t)):
-        labels_predict.append([])
-    size = len(t)
-    for d in valid:
-        if d["k"] == 5:
-            print(d["k"])
-            labels_predict = predict_labels(5, labels_predict, d)
-        elif d["k"] == 10:
-            labels_predict = predict_labels(10, labels_predict, d)
-        elif d["k"] == 15:
-            labels_predict = predict_labels(15, labels_predict, d)
-        elif d["k"] == 20:
-            labels_predict = predict_labels(20, labels_predict, d)
-        elif d["k"] == 25:
-            labels_predict = predict_labels(25, labels_predict, d)
-        elif d["k"] == 30:
-            labels_predict = predict_labels(30, labels_predict, d)
-
-    for i in range(len(labels_predict)):
-        labels = labels_predict[i]
-        print(labels)
-        # 计算预测正确率
-        TP = 0  # 将正类预测为正类数
-        TN = 0  # 将负类预测为负类数
-        FP = 0  # 将负类预测为正类数,误报
-        FN = 0  # 将正类预测为负类数,漏报
-        P = 0  # 正样本数
-        N = 0  # 负样本数
-        for l in range(len(labels)):
-            if labels[l] == 1:  # 预测为正类
-                if labels[l] == y_train[l]:  # 实际为正类
-                    P = P + 1
-                    TP = TP + 1
-                else:  # 实际为负类
-                    FP = FP + 1
-                    N = N + 1
-            else:  # 预测为负类
-                if labels[l] == y_train[l]:  # 实际为负类
-                    TN = TN + 1
-                    N = N + 1
-                else:  # 实际为正类
-                    P = P + 1
-                    FN = FN + 1
-
-        per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
-        print("k: %d" % (divmod(i, 11)[0]+1)*5,
-              "t: %f" % t[divmod(i, 6)[1]],
-              "训练集正确率为：%f " % (per_eva.get_accuracy()),
-              "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
-              " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
-              )
+            per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
+            print("k: %d" % k,
+                  "t: %f" % t,
+                  "训练集正确率为：%f " % (per_eva.get_accuracy()),
+                  "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
+                  " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+                  )

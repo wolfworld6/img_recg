@@ -1,22 +1,19 @@
 # -*- coding:utf-8 -*-
 
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.ensemble import IsolationForest
-from scipy import stats
-
 import cv2
 import numpy as np
 import os
 from skimage import feature as ft
 
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 import pickle
+
+from Davion import lof_tuning
 
 '''
    @author:bqFirst
-   date:2018-8p
+   date:2018-8
+   孤立森林-K与threshold调优
 
 '''
 
@@ -32,6 +29,7 @@ class PerformanceEvaluation:
     :param N: 预测为负类样本数
     :return:
     """
+
     def __init__(self, tp, tn, fp, fn, p, n):
         self.__TP = tp
         self.__TN = tn
@@ -42,11 +40,11 @@ class PerformanceEvaluation:
 
     def get(self):
         return self.__TP, \
-                self.__TN, \
-                self.__FP, \
-                self.__FN, \
-                self.__P, \
-                self.__N
+               self.__TN, \
+               self.__FP, \
+               self.__FN, \
+               self.__P, \
+               self.__N
 
     def set(self, tp, tn, fp, fn, p, n):
         self.__TP = tp
@@ -82,6 +80,33 @@ class PerformanceEvaluation:
         return p
 
 
+def predict_labels(k, labels_predict, d):
+    times = (6 - divmod(k, 6))[0]
+    if d["t"] == 1.0:
+        labels_predict[0+times*size].extend(d["label"])
+    elif d["t"] == 1.2:
+        labels_predict[1+times*size].extend(d["label"])
+    elif d["t"] == 1.4:
+        labels_predict[2+times*size].extend(d["label"])
+    elif d["t"] == 1.6:
+        labels_predict[3+times*size].extend(d["label"])
+    elif d["t"] == 1.8:
+        labels_predict[4+times*size].extend(d["label"])
+    elif d["t"] == 2.0:
+        labels_predict[5+times*size].extend(d["label"])
+    elif d["t"] == 2.2:
+        labels_predict[6+times*size].extend(d["label"])
+    elif d["t"] == 2.4:
+        labels_predict[7+times*size].extend(d["label"])
+    elif d["t"] == 2.6:
+        labels_predict[8+times*size].extend(d["label"])
+    elif d["t"] == 2.8:
+        labels_predict[9+times*size].extend(d["label"])
+    elif d["t"] == 3.0:
+        labels_predict[10+times*size].extend(d["label"])
+    return labels_predict
+
+
 def load(pklf):
     """
     通过载入数据文件返回训练数据和测试数据
@@ -109,20 +134,30 @@ def load(pklf):
         else:
             X_abnorm.append(X[i])
             y_abnorm.append(y[i])
-    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.2, random_state=0)
+    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.01,
+                                                                            random_state=42)
 
-    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.2, random_state=0)
-    
+    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.9,
+                                                                                    random_state=42)
     X_train = np.vstack((X_norm_train, X_abnorm_train))
     y_train = np.r_[y_norm_train, y_abnorm_train]
-    abnorm_train = len(y_abnorm_train)/len(y_train)
+    abnorm_train = len(y_abnorm_train) / len(y_train)
     X_test = np.vstack((X_norm_test, X_abnorm_test))
     y_test = np.r_[y_norm_test, y_abnorm_test]
-    abnorm_test = len(y_abnorm_test)/len(y_test)
+    abnorm_test = len(y_abnorm_test) / len(y_test)
     abnorm_train = len(y_abnorm_train) / len(y_train)
 
-    print("X_train:%d,X_test:%d, y_train:%d, y_test:%d, abnorm_train:%f, abnorm_test:%f" % (len(X_train), len(X_test), len(y_train), len(y_test), abnorm_train, abnorm_test))
-    return X_train, X_test, y_train, y_test, abnorm_train, abnorm_test
+    print("X_train:%d,X_test:%d, y_train:%d, y_test:%d, abnorm_train:%f, abnorm_test:%f" % (
+        len(X_train), len(X_test), len(y_train), len(y_test), abnorm_train, abnorm_test))
+    X_train_tuple = []
+    for x in X_train:
+        X_train_tuple.append(tuple(x))
+    X_test_tuple = []
+    for x in X_test:
+        X_test_tuple.append(tuple(x))
+
+    # return X_train, X_test, y_train, y_test, abnorm_train, abnorm_test
+    return X_train_tuple, X_test_tuple, y_train, y_test, abnorm_train, abnorm_test
 
 
 def pkl(file_dir):
@@ -194,12 +229,12 @@ def color_moments(image):
     v_std = np.std(v)  # np.sqrt(np.mean(abs(v - v.mean())**2))
     color_feature.extend([h_std, s_std, v_std])
     # The third central moment - the third root of the skewness
-    h_skewness = np.mean(abs(h - h.mean())**3)
-    s_skewness = np.mean(abs(s - s.mean())**3)
-    v_skewness = np.mean(abs(v - v.mean())**3)
-    h_thirdMoment = h_skewness**(1./3)
-    s_thirdMoment = s_skewness**(1./3)
-    v_thirdMoment = v_skewness**(1./3)
+    h_skewness = np.mean(abs(h - h.mean()) ** 3)
+    s_skewness = np.mean(abs(s - s.mean()) ** 3)
+    v_skewness = np.mean(abs(v - v.mean()) ** 3)
+    h_thirdMoment = h_skewness ** (1. / 3)
+    s_thirdMoment = s_skewness ** (1. / 3)
+    v_thirdMoment = v_skewness ** (1. / 3)
     color_feature.extend([h_thirdMoment, s_thirdMoment, v_thirdMoment])
     return color_feature
 
@@ -240,40 +275,54 @@ def create_data(file_dir, test_size):
 
 if __name__ == '__main__':
 
-    rng = np.random.RandomState(0)  # 42
+    rng = np.random.RandomState(42)
     file_dir = "E:\Data\\train"
     pklf = "./feature.pkl"
     X_train, X_test, y_train, y_test, outliers_fraction, unused = load(pklf)
 
-    # fit the model
-    clf = IsolationForest(random_state=rng)
-    clf.fit(X_train)
-    scores_pred = clf.decision_function(X_train)
+    t = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+    k = 5  # [5, 10, 15, 20 ,25, 30]
 
-    X_predict = X_train
-    y_predict = y_train
-    times = np.arange(-1.5, -0.5, 0.1)
-    # times = [-2.8]
-    for t in times:
-        valid = clf.predict(X_predict, t)
+    valid = lof_tuning.lof_values(t, k, X_train)
+    labels_predict = []
+    for i in range(divmod(k, 5)[0]*len(t)):
+        labels_predict.append([])
+    size = len(t)
+    for d in valid:
+        if d["k"] == 5:
+            print(d["k"])
+            labels_predict = predict_labels(5, labels_predict, d)
+        elif d["k"] == 10:
+            labels_predict = predict_labels(10, labels_predict, d)
+        elif d["k"] == 15:
+            labels_predict = predict_labels(15, labels_predict, d)
+        elif d["k"] == 20:
+            labels_predict = predict_labels(20, labels_predict, d)
+        elif d["k"] == 25:
+            labels_predict = predict_labels(25, labels_predict, d)
+        elif d["k"] == 30:
+            labels_predict = predict_labels(30, labels_predict, d)
+
+    for i in range(len(labels_predict)):
+        labels = labels_predict[i]
+        print(labels)
         # 计算预测正确率
-        TP = 0  # 样本为正，预测结果为正
-        TN = 0  # 样本为负，预测结果为正
-        FP = 0  # 样本为负，预测结果为负,误报
-        FN = 0  # 样本为正，预测结果为负,漏报
-        P = 0  # 正类样本数
-        N = 0  # 负类样本数
-
-        for i in range(len(valid)):
-            if valid[i] == 1:  # 预测为正类
-                if valid[i] == y_predict[i]:  # 实际为正类
+        TP = 0  # 将正类预测为正类数
+        TN = 0  # 将负类预测为负类数
+        FP = 0  # 将负类预测为正类数,误报
+        FN = 0  # 将正类预测为负类数,漏报
+        P = 0  # 正样本数
+        N = 0  # 负样本数
+        for l in range(len(labels)):
+            if labels[l] == 1:  # 预测为正类
+                if labels[l] == y_train[l]:  # 实际为正类
                     P = P + 1
                     TP = TP + 1
                 else:  # 实际为负类
                     FP = FP + 1
                     N = N + 1
             else:  # 预测为负类
-                if valid[i] == y_predict[i]:  # 实际为负类
+                if labels[l] == y_train[l]:  # 实际为负类
                     TN = TN + 1
                     N = N + 1
                 else:  # 实际为正类
@@ -281,9 +330,9 @@ if __name__ == '__main__':
                     FN = FN + 1
 
         per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
-
-        print("t: %f" % t,
-              "正确率为：%f " % (per_eva.get_accuracy()),
-              "召回率、正常图像识别率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
-              " 特效度、异常图像识别率：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+        print("k: %d" % (divmod(i, 11)[0]+1)*5,
+              "t: %f" % t[divmod(i, 6)[1]],
+              "训练集正确率为：%f " % (per_eva.get_accuracy()),
+              "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
+              " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
               )

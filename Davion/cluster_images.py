@@ -149,4 +149,4 @@ if __name__ == "__main__":
         img = cv2.imread(f)
         ft = color_mean(img)
         feature.append(ft)
-    l1, l2, l3 = image_cluster(feature, 2)
+    l1, l2, l3 = image_cluster(feature, 3)

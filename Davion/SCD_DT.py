@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 '''
    @author:bqFirst
    date:2018-8p
+   决策树分类
 '''
 
 

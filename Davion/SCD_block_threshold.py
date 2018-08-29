@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 '''
    @author:bqFirst
    date:2018-8
-   图像分块、阈值测试
+   图像分块、阈值对算法调优测试
 
 '''
 

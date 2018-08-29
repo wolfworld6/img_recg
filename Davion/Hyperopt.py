@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 '''
    @author:bqFirst
    date:2018-8p
-
+    自动选择最优算法
 '''
 
 
