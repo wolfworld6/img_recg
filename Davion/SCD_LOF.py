@@ -107,29 +107,31 @@ def load(pklf):
         else:
             X_abnorm.append(X[i])
             y_abnorm.append(y[i])
-    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.01,
-                                                                            random_state=42)
+    X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=30,
+                                                                            random_state=0)
 
-    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.9,
-                                                                                    random_state=42)
+    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=26,
+                                                                                    random_state=0)
+
     X_train = np.vstack((X_norm_train, X_abnorm_train))
     y_train = np.r_[y_norm_train, y_abnorm_train]
     abnorm_train = len(y_abnorm_train) / len(y_train)
     X_test = np.vstack((X_norm_test, X_abnorm_test))
     y_test = np.r_[y_norm_test, y_abnorm_test]
-    abnorm_test = len(y_abnorm_test) / len(y_test)
-    abnorm_train = len(y_abnorm_train) / len(y_train)
+    abnorm_test = len(y_abnorm_test)  # len(y_abnorm_test) / len(y_test)
+    abnorm_train = len(y_abnorm_train)  # len(y_abnorm_train) / len(y_train)
 
-    print("X_train:%d,X_test:%d, y_train:%d, y_test:%d, abnorm_train:%f, abnorm_test:%f" % (
-    len(X_train), len(X_test), len(y_train), len(y_test), abnorm_train, abnorm_test))
     X_train_tuple = []
     for x in X_train:
         X_train_tuple.append(tuple(x))
-    X_test_tuple = []
-    for x in X_test:
-        X_test_tuple.append(tuple(x))
 
     # return X_train, X_test, y_train, y_test, abnorm_train, abnorm_test
+    X_test_tuple = []
+    for x in X:
+        X_test_tuple.append(tuple(x))
+    y_test = y
+    print("X_train:%d,X_test:%d, y_train:%d, y_test:%d, abnorm_train:%f, abnorm_test:%f" % (
+        len(X_train_tuple), len(X_test_tuple), len(y_train), len(y_test), abnorm_train, abnorm_test))
     return X_train_tuple, X_test_tuple, y_train, y_test, abnorm_train, abnorm_test
 
 
@@ -266,16 +268,40 @@ def lof_values(thresholds, k, instances, **kwargs):
     return values
 
 
+def view(data):
+    from pyecharts import Scatter3D
+    range_color = [
+        '#313695', '#4575b4', '#74add1', '#abd9e9', '#e0f3f8', '#ffffbf',
+        '#fee090', '#fdae61', '#f46d43', '#d73027', '#a50026']
+    # v1 = [10, 20, 30, 40, 50, 60]
+    # v2 = [10, 20, 30, 40, 50, 60]
+    scatter = Scatter3D("图像特征数据散点图")
+    scatter.add("一阶矩特征散点图", data, is_visualmap=True, visual_range_color=range_color)
+    scatter.render()
+
+
 if __name__ == '__main__':
 
     rng = np.random.RandomState(42)
     file_dir = "E:\Data\\train"
     pklf = "./feature.pkl"
     X_train, X_test, y_train, y_test, outliers_fraction, unused = load(pklf)
-
-    ts = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]
+    data = []
+    for x in X_train:
+        v = []
+        x = np.array(x)
+        v.append(x[0])
+        v.append(x[3])
+        v.append(x[6])
+        # print(v)
+        data.append(v)
+    # print(data)
+    view(data)
+    ts = np.arange(1.0, 5.2, 0.2)
     ks = [5, 10, 15, 20, 25, 30]
-    for k in ks:
+
+    '''
+        for k in ks:
         for t in ts:
             # 计算预测正确率
             TP = 0  # 将正类预测为正类数
@@ -307,4 +333,59 @@ if __name__ == '__main__':
                   "训练集正确率为：%f " % (per_eva.get_accuracy()),
                   "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
                   " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+                  )
+
+    '''
+    l = lof.LOF(X_train)
+    for k in ks:
+        values = []
+        for x in X_test:
+            # print(x, y)
+            value = l.local_outlier_factor(k, x)
+            values.append(value)
+
+        for t in ts:
+            # 计算预测正确率
+            TP = 0  # 将正类预测为正类数
+            TN = 0  # 将负类预测为负类数
+            FP = 0  # 将负类预测为正类数,误报
+            FN = 0  # 将正类预测为负类数,漏报
+            P = 0  # 正样本数
+            N = 0  # 负样本数
+            for v, y in zip(values, y_test):
+
+                label = 0
+                if v > t:
+                    label = -1
+                else:
+                    label = 1
+                if label == 1:  # 预测为正类
+                    if label == int(y):  # 实际为正类
+                        P = P + 1
+                        TP = TP + 1
+                    else:  # 实际为负类
+                        FP = FP + 1
+                        N = N + 1
+                else:  # 预测为负类
+                    if label == int(y):  # 实际为负类
+                        TN = TN + 1
+                        N = N + 1
+                    else:  # 实际为正类
+                        P = P + 1
+                        FN = FN + 1
+
+            per_eva = PerformanceEvaluation(TP, TN, FP, FN, P, N)
+            '''
+            print("k: %d" % k,
+                  "t: %f" % t,
+                  "训练集正确率为：%f " % (per_eva.get_accuracy()),
+                  "召回率：%d/%d = %f" % (TP, P, per_eva.get_recall()),
+                  " 特效度：%d/%d = %f" % (TN, N, per_eva.get_specificity())
+                  )
+            '''
+            print(k,
+                  t,
+                  per_eva.get_accuracy(),
+                  per_eva.get_recall(),
+                  per_eva.get_specificity()
                   )
