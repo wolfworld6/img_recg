@@ -122,9 +122,9 @@ def load(pklf):
     abnorm_train = len(y_abnorm_train)  # len(y_abnorm_train) / len(y_train)
 
     X_train_tuple = []
-    for x in X_train:
+    for x in X_norm_train:
         X_train_tuple.append(tuple(x))
-
+    y_train = y_norm
     # return X_train, X_test, y_train, y_test, abnorm_train, abnorm_test
     X_test_tuple = []
     for x in X:
