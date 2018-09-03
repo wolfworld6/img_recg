@@ -109,7 +109,7 @@ def load(pklf):
             y_abnorm.append(y[i])
     X_norm_train, X_norm_test, y_norm_train, y_norm_test = train_test_split(X_norm, y_norm, test_size=0.2, random_state=0)
 
-    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.2, random_state=0)
+    X_abnorm_train, X_abnorm_test, y_abnorm_train, y_abnorm_test = train_test_split(X_abnorm, y_abnorm, test_size=0.9, random_state=0)
     
     X_train = np.vstack((X_norm_train, X_abnorm_train))
     y_train = np.r_[y_norm_train, y_abnorm_train]
@@ -248,8 +248,8 @@ if __name__ == '__main__':
     clf.fit(X_train)
     scores_pred = clf.decision_function(X_train)
 
-    X_predict = X_train
-    y_predict = y_train
+    X_predict = X_test
+    y_predict = y_test
     times = np.arange(-1.5, -0.5, 0.1)
     # times = [-2.8]
     for t in times:
